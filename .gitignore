@@ -1,0 +1,35 @@
+# April model
+/models
+*.april
+
+# Build output
+/build
+/bin
+
+# Logs
+*.log
+
+# Object files
+*.o
+*.obj
+
+# Libraries
+*.lib
+*.a
+*.la
+*.lo
+
+# Shared objects
+*.dll
+*.so
+*.so.*
+
+# Executables
+*.exe
+*.out
+
+# Editor-Specific
+/.vscode
+/.nvim
+/.vs
+*.vsix
