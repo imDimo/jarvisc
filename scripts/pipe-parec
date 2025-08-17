@@ -1,0 +1,32 @@
+#!/bin/bash
+
+GREP_RES=$(LANG=C pactl list | grep -A2 'Source #' | grep 'Name: ' | grep 'source' | cut -d" " -f2)
+DEVICE_ARR=(${GREP_RES//$'\n'/ })
+ARR_LENGTH=${#DEVICE_ARR[@]}
+
+if [ $ARR_LENGTH -eq 0 ]; then
+    echo "No input devices found"
+    exit 1
+fi
+
+MODEL=$(find . -name '*.april' -type f -print -quit)
+
+if [ -n "$MODEL" ]; then
+    echo "Speech model found: $MODEL"
+else
+    echo "Speech model could not be found! Place a .april model in the same directory as the jarvisc executable"
+    exit 1
+fi
+
+PS3="Select an Input Device: "
+select device in "${DEVICE_ARR[@]}";
+do
+    if [ $(($REPLY)) -gt 0 ] && [[ $(($REPLY)) -le $ARR_LENGTH ]]; then
+        echo "Selected device: $device"
+        parec --format=s16 --rate=16000 --channels=1 --latency-ms=100 --device="$device" | ./jarvisc - "$MODEL"
+        exit 1
+    else
+        echo "Invalid selection"
+    fi
+done
+

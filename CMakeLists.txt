@@ -3,6 +3,8 @@ PROJECT(jarvisc)
 
 set(CMAKE_CXX_STANDARD 17)
 
+set(outputDir ${CMAKE_SOURCE_DIR}/bin/${CMAKE_SYSTEM_NAME}${bitness})
+
 set(bitness 32)
 if(CMAKE_SIZEOF_VOID_P EQUAL 8)
     set(bitness 64)
