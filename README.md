@@ -2,11 +2,12 @@
 
 ## Generating/Building (w/ CMake)
 
-Compiling this project will additionally compile april-asr for its static library file. Refer to april-asr (link above) for additional dependency requirements.
+Compiling this project will additionally compile april-asr for its shared library file if one cannot be found on the system. Refer to april-asr (link above) for additional dependency requirements.
 
+To begin, create a directory to hold intermediate build files.
 ```bash
 mkdir build
 cd build
 ````
 
-Then run `make` or `cmake --build .`. Libraries and the compiled program will be located in `/bin`.
+Then run `cmake ..`, followed by `make` (or your preferred tool). Library files for april-asr, if generated, can be found in `/external/lib`. The application itself will output to `/bin`.
