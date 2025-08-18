@@ -28,6 +28,10 @@
 *.exe
 *.out
 
+# Gitmodule library artifacts
+/external/source
+/external/lib
+
 # Editor-Specific
 /.vscode
 /.nvim
