@@ -1,6 +1,8 @@
 CMAKE_MINIMUM_REQUIRED(VERSION 3.5)
 PROJECT(jarvisc)
 
+cmake_policy(SET CMP0079 NEW)
+
 set(CMAKE_CXX_STANDARD 17)
 
 set(outputDir ${CMAKE_SOURCE_DIR}/bin/${CMAKE_SYSTEM_NAME}${bitness})

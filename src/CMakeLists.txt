@@ -7,7 +7,11 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${outputDir})
 
 include_directories(${PROJECT_SOURCE_DIR}/../include)
 
-add_executable(${PROJECT_NAME} ${PROJECT_SOURCE_DIR}/main.cpp)
+set(SOURCE_FILES
+    main.cpp
+    phrase_data.cpp)
+
+add_executable(${PROJECT_NAME} ${SOURCE_FILES})
 
 add_custom_command(
     TARGET ${PROJECT_NAME} COMMAND ${CMAKE_COMMAND} -E copy

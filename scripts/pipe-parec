@@ -9,6 +9,9 @@ if [ $ARR_LENGTH -eq 0 ]; then
     exit 1
 fi
 
+DEVICE_ARR+=('@DEFAULT_MONITOR@')
+((ARR_LENGTH++))
+
 MODEL=$(find . -name '*.april' -type f -print -quit)
 
 if [ -n "$MODEL" ]; then
@@ -23,7 +26,7 @@ select device in "${DEVICE_ARR[@]}";
 do
     if [ $(($REPLY)) -gt 0 ] && [[ $(($REPLY)) -le $ARR_LENGTH ]]; then
         echo "Selected device: $device"
-        parec --format=s16 --rate=16000 --channels=1 --latency-ms=100 --device="$device" | ./jarvisc - "$MODEL"
+        parec --format=s16 --rate=16000 --channels=1 --latency-ms=100 --device="$device" | ./jarvisc -m "$MODEL"
         exit 1
     else
         echo "Invalid selection"
