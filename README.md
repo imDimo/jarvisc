@@ -4,7 +4,7 @@
 
 This project uses [april-asr](https://github.com/abb128/april-asr) for speech recognition. If CMake cannot find april-asr installed on your system while building jarvisc, it will attempt to build/compile the library from source. Refer to their page for additional dependency requirements.
 
-You can get the source code as a submodule of this project by running `git clone` with the `--recurse-submodules` flag. You can alternatively fetch the submodule at a later time by running `git submodule init` and `git submodule update` within the jarvisc project directory.
+You can get the april-asr source code as a submodule of this project by running `git clone` with the `--recurse-submodules` flag. You can alternatively fetch the submodule at a later time by running `git submodule init` and `git submodule update` within the jarvisc project directory.
 
 All library sources will be placed in `/external/source/[library name]` while compiled libraries will be placed under `/external/lib`.
 
