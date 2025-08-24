@@ -1,6 +1,8 @@
 #ifndef JARVISC_PHRASE_DATA
 #define JARVISC_PHRASE_DATA
 
+#include "definitions.h"
+
 /**
  * Types of actions
  *
@@ -29,23 +31,11 @@ struct action {
     char* data; 
 };
 
-
-struct phrase {
-    // Phrase to trigger this action
-    char* phrase; 
-
-    // Whether or not the phrase is currently being matched
-    bool is_matching; 
-
-    // Actions to be run when the phrase is matched
-    action* actions;
-};
-
-
 // Part of a sentence including a word, its length, and a reference to the next part
 struct sentence_part {
     // Characters of the word held in this part of the sentence
-    char* text;
+    char text[MAX_WORD_LENGTH];
+    // char* text;
     // Reference to the next part of the sentence
     sentence_part* next;
     // Reference to the previous part of the sentence
@@ -54,6 +44,18 @@ struct sentence_part {
     int length;
     // Number of tokens used to construct this word, including tokens for punctuation and other removed symbols
     int num_tokens;
+};
+
+struct phrase {
+    // Phrase to trigger this action
+    sentence_part* phrase; 
+    // char* phrase; 
+
+    // Whether or not the phrase is currently being matched
+    bool is_matching; 
+
+    // Actions to be run when the phrase is matched
+    action* actions;
 };
 
 sentence_part* deallocate_part(sentence_part* part);

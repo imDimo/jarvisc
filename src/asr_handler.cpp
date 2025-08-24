@@ -35,7 +35,6 @@ void process_tokens(asr_sentence_data* data) {
         delete data->sentence_end;
 
         data->sentence_start = new sentence_part();
-        data->sentence_start->text = new char[MAX_WORD_LENGTH]();
         data->sentence_end = data->sentence_start;
         data->prev_token_count = 0;
     }
@@ -74,7 +73,6 @@ void process_tokens(asr_sentence_data* data) {
         int c = 0;
         if (is_new_word) {
             curr_word = new sentence_part();
-            curr_word->text = new char[MAX_WORD_LENGTH]();
             curr_word->prev = data->sentence_end;
             data->sentence_end->next = curr_word;
             data->sentence_end = curr_word;
@@ -104,7 +102,6 @@ void process_tokens(asr_sentence_data* data) {
             deallocate_parts_from_start(data->sentence_start);
 
             data->sentence_start = new sentence_part();
-            data->sentence_start->text = new char[MAX_WORD_LENGTH]();
             data->sentence_end = data->sentence_start;
             data->prev_token_count = 0;
             std::cout << '\n';
@@ -134,7 +131,6 @@ void process_tokens(asr_sentence_data* data) {
             deallocate_parts_from_start(data->sentence_start);
 
             data->sentence_start = new sentence_part();
-            data->sentence_start->text = new char[MAX_WORD_LENGTH]();
             data->sentence_end = data->sentence_start;
             data->prev_token_count = 0;
 

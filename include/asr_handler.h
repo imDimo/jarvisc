@@ -1,17 +1,16 @@
 #ifndef JARVISC_ASR_HANDLER
 #define JARVISC_ASR_HANDLER
 
-#include "phrase_data.h"
-#include <mutex>
+#include "definitions.h"
 
-// Use system install of april-asr if it was used during compilation
+#include "phrase_data.h"
+
+// Use system install of april-asr if it was found during compilation
 #ifdef APRILASR_INSTALLED
 #include <april-asr/april_api.h>
 #else
 #include "../external/source/april-asr/april_api.h"
 #endif
-
-#define MAX_WORD_LENGTH 32
 
 struct asr_sentence_data {
     sentence_part* sentence_start;

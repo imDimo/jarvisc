@@ -31,10 +31,10 @@
 typedef SSIZE_T ssize_t;
 #endif
 
+#include "../include/definitions.h"
+
 #include "../include/asr_handler.h"
 #include "../include/phrase_data.h"
-
-#define BUFFER_SIZE 1024
 
 int main (int argc, char *argv[]) {
     struct jarvisc_options {

@@ -1,0 +1,7 @@
+#ifndef DEFINITIONS
+#define DEFINITIONS
+
+#define BUFFER_SIZE 1024
+#define MAX_WORD_LENGTH 32
+
+#endif

@@ -1,8 +1,8 @@
 #include "../include/phrase_data.h"
 
 sentence_part* deallocate_part(sentence_part* part) {
-    delete[] part->text;
-    part->text = nullptr;
+    // delete[] part->text;
+    // part->text = nullptr;
 
     sentence_part* next = part->next;
     delete part;
@@ -12,8 +12,8 @@ sentence_part* deallocate_part(sentence_part* part) {
 }
 
 sentence_part* deallocate_part_end(sentence_part* part) {
-    delete[] part->text;
-    part->text = nullptr;
+    // delete[] part->text;
+    // part->text = nullptr;
 
     sentence_part* prev = part->prev;
     delete part;
