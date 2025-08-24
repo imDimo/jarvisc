@@ -1,5 +1,18 @@
-// For basic live captioning of desktop audio, run it like so:
-// parec --format=s16 --rate=16000 --channels=1 --latency-ms=100 --device=@DEFAULT_MONITOR@ | -m /path/to/model.april
+/*
+ * Copyright (C) 2022 abb128
+ * 
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, version 3.
+ * 
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ * 
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ */
 
 #include <getopt.h>
 #include <cstring>
@@ -8,11 +21,6 @@
 #include <assert.h>
 #include <ostream>
 #include <time.h>
-#include <errno.h>
-
-#include "../external/source/april-asr/april_api.h"
-
-#include "../include/phrase_data.h"
 
 #ifndef _MSC_VER
 #include <unistd.h>
@@ -23,145 +31,18 @@
 typedef SSIZE_T ssize_t;
 #endif
 
+#include "../include/asr_handler.h"
+#include "../include/phrase_data.h"
+
 #define BUFFER_SIZE 1024
-#define MAX_WORD_LENGTH 32
-
-// Data structure holding all information passed into callback
-struct {
-    // Track position in sentence currently being built
-    sentence_part* sentence_start = nullptr;
-    sentence_part* sentence_end = nullptr;
-    
-    phrase* phrases = nullptr;
-    int prev_token_count = 0;
-} program_data;
-
-bool is_punctuation(char c) {
-    switch (c) {
-        case '.': case '!': case '?':
-            return true;
-    }
-
-    return false;
-}
-
-// This callback function will get called every time a new result is decoded.
-// It's passed into the AprilConfig along with the userdata pointer.
-void handler(void *handler_data, AprilResultType result, size_t count, const AprilToken *tokens) {
-    assert(handler_data == &program_data);
-    
-    if (program_data.sentence_start != nullptr && program_data.sentence_end != nullptr) {
-
-        for (int t = program_data.prev_token_count; t < count; t++) {
-
-            const char* curr_token = tokens[t].token;
-            
-            // Not all models set the SENTENCE_END_BIT, so a manual check is required for compatibility
-            if (/*tokens[t].flags && APRIL_TOKEN_FLAG_SENTENCE_END_BIT != 0 || */is_punctuation(curr_token[0])) {
-                continue;
-            }
-            
-            bool new_word = false;
-
-            if (tokens[t].flags && APRIL_TOKEN_FLAG_WORD_BOUNDARY_BIT != 0)
-                new_word = true;
-
-            std::cout << curr_token;
-            std::flush(std::cout);
-
-            sentence_part* curr_word;
-            sentence_part* prev_word;
-            
-            int c = 0;
-            if (new_word) {
-                curr_word = new sentence_part { 0 };
-                curr_word->word = new char[MAX_WORD_LENGTH];
-
-                prev_word = program_data.sentence_end;
-                program_data.sentence_end->next = curr_word;
-                program_data.sentence_end = curr_word;
-
-                // Skip special character in character copy loop
-                c++;
-            }
-            else {
-                // Append to existing word fragment
-                curr_word = program_data.sentence_end;
-            }
-
-            while (curr_token[c] != '\0' && curr_word->word_length < MAX_WORD_LENGTH) {
-                if (curr_token[c] != ',' && curr_token[c] != '\'') {
-                    curr_word->word[curr_word->word_length] = curr_token[c];
-                    curr_word->word_length++;
-                }
-
-                c++;
-            }
-
-            curr_word->word[curr_word->word_length] = '\0';
-        }
-
-        sentence_part* word = program_data.sentence_start;
-
-        switch(result){
-            case APRIL_RESULT_RECOGNITION_FINAL: 
-                //std::cout << '@';
-                // std::cout << "\n[" << data.sentence << "]\n";
-
-                break;
-            case APRIL_RESULT_RECOGNITION_PARTIAL:
-
-                //std::cout << "- ";
-                //std::cout << '\n' << data.sentence << '\n';
-                break;
-            case APRIL_RESULT_SILENCE:
-                
-                /*
-                std::cout << "\n[ ";
-
-                while (word->next != nullptr) {
-
-                    word = word->next;
-                    std::cout << word->word << ' ';
-                }
-                std::cout << "]\n";
-                */
-                std::cout << std::endl;
-                deallocate_sentence(program_data.sentence_start);
-                
-                program_data.sentence_start = new sentence_part { 0 };
-                program_data.sentence_start->word = new char[MAX_WORD_LENGTH];
-                program_data.sentence_end = program_data.sentence_start;
-                program_data.prev_token_count = 0;
-
-                return;
-
-            default:
-                assert(false);
-                return;
-        }
-
-        program_data.prev_token_count = count;
-    }
-    else {
-        delete program_data.sentence_start;
-        delete program_data.sentence_end;
-
-        program_data.sentence_start = new sentence_part { 0 };
-        program_data.sentence_start->word = new char[MAX_WORD_LENGTH];
-        program_data.sentence_end = program_data.sentence_start;
-        program_data.prev_token_count = 0;
-    }
-}
 
 int main (int argc, char *argv[]) {
     struct jarvisc_options {
         char* model_path;
         int logging_enabled;
-    } args = { 0 };
+    } args{};
 
     static struct option long_options[] = {
-        { "log",    no_argument,        &args.logging_enabled,    1},
         { "model",  required_argument,  0,  'm' },
         { 0, 0, 0, 0 }
     };
@@ -190,6 +71,9 @@ int main (int argc, char *argv[]) {
         }
     }
 
+    // AsrHandler* asr_handler = AsrHandler::getHandler();
+    // asr_sentence_data* sentence_data = AsrHandler::getHandler()->sentence_data;
+
     // In the start of our program we should call aam_api_init.
     // This should only be called once.
     aam_api_init(APRIL_VERSION);
@@ -209,9 +93,11 @@ int main (int argc, char *argv[]) {
     std::cout << "Model lang: " << aam_get_language(model) << "\n";
     std::cout << "Model samplerate: " << model_sample_rate << "\n\n";
 
-    AprilConfig config = { 0 };
+    asr_sentence_data sentence_data{};
+    
+    AprilConfig config{};
     config.handler = handler;
-    config.userdata = (void*)&program_data;
+    config.userdata = (void*)&sentence_data;
 
     // By default, the session runs in synchronous mode. If you want async
     // processing, you may choose to set it to APRIL_CONFIG_FLAG_ASYNC_RT_BIT
@@ -241,8 +127,27 @@ int main (int argc, char *argv[]) {
 
             aas_feed_pcm16(session, (short *)recording_data, r/2);
 
+            process_tokens(&sentence_data);
+
+
+            sentence_part* part = sentence_data.sentence_start;
+            while (part != nullptr) {
+                if (part->text != nullptr) {
+                    std::cout << part->text << ' ';
+                    std::flush(std::cout);
+                }
+                part = part->next;
+            }
+            std::cout << std::endl;
+
             // TODO: Scan sentence to match phrases
-            program_data.sentence_start;
+            // sentence_part* part = sentence_data.sentence_start;
+            //
+            // while (part != nullptr) {
+            //     std::cout << part->word << ' ';
+            //     std::flush(std::cout);
+                // part = part->next;
+            // }
         }
     } 
     

@@ -9,7 +9,9 @@ include_directories(${PROJECT_SOURCE_DIR}/../include)
 
 set(SOURCE_FILES
     main.cpp
-    phrase_data.cpp)
+    phrase_data.cpp
+    asr_handler.cpp
+)
 
 add_executable(${PROJECT_NAME} ${SOURCE_FILES})
 
