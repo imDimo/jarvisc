@@ -6,7 +6,7 @@ This project uses [april-asr](https://github.com/abb128/april-asr) for speech re
 
 You can get the source code as a submodule of this project by running `git clone` with the `--recurse-submodules` flag. You can alternatively fetch the submodule at a later time by running `git submodule init` and `git submodule update` within the jarvisc project directory.
 
-All library sources will be placed in `/external/source/[library name]` while compiled libraries will be placed under `/external/lib`
+All library sources will be placed in `/external/source/[library name]` while compiled libraries will be placed under `/external/lib`.
 
 ## Generating/Building (w/ CMake)
 
