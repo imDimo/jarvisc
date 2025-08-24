@@ -1,12 +1,10 @@
 #include "../include/asr_handler.h"
 
-#include <algorithm>
 #include <cassert>
 #include <iostream>
 #include <stdio.h>
 #include <stdbool.h>
 
-#include "../external/source/april-asr/april_api.h"
 #include "../include/phrase_data.h"
 
 bool is_punctuation(char c) {

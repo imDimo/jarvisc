@@ -13,7 +13,12 @@ if(CMAKE_SIZEOF_VOID_P EQUAL 8)
 endif()
 
 set(APRILASR april-asr)
+
 find_library(APRILASR_FOUND aprilasr)
+
+if(APRILASR_FOUND)
+    add_compile_definitions(APRILASR_INSTALLED)
+endif()
 
 add_subdirectory(${PROJECT_SOURCE_DIR}/external)
 add_subdirectory(${PROJECT_SOURCE_DIR}/src)
