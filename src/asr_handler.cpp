@@ -7,17 +7,32 @@
 
 #include "../include/phrase_data.h"
 
+void reset_sentence_data(asr_sentence_data& data) {
+
+    data.sentence.clear();
+    data.prev_sentence_length = 0;
+    data.sentence_start_offset = 0;
+}
+
 bool is_punctuation(char c) {
     switch (c) {
-        case '.': case ',': case '!': case '?': case '\'':
+        case '.': case '!': case '?':
             return true;
     }
 
     return false;
 }
 
-void handler(void *handler_data, AprilResultType result, size_t count, const AprilToken *tokens) {
+bool is_other_special(char c) {
+    switch (c) {
+        case ',': case '\'': case '$':
+        return true;
+    }
 
+    return false;
+}
+
+void handler(void *handler_data, AprilResultType result, size_t count, const AprilToken *tokens) {
     asr_sentence_data* data = (asr_sentence_data*)handler_data;
     data->result_type = result;
     data->token_count = count;
@@ -28,118 +43,95 @@ void handler(void *handler_data, AprilResultType result, size_t count, const Apr
         data->tokens[t] = tokens[t];
 }
 
-void process_tokens(asr_sentence_data* data) {
-
-    if (data->sentence_start == nullptr || data->sentence_end == nullptr) {
-        delete data->sentence_start;
-        delete data->sentence_end;
-
-        data->sentence_start = new sentence_part();
-        data->sentence_end = data->sentence_start;
-        data->prev_token_count = 0;
-    }
-
+void process_tokens(asr_sentence_data& data) {
     int start_token = 0;
 
-    sentence_part* part = data->sentence_start;
+    // Get number of tokens in the sentence up until the most recent word
+    // We want to skip as many pre-existing tokens as possible, but the asr library may alter/correct the last word in the sentence, so we go back to fetch those changes
+    // for (auto part = std::next(data.sentence.begin(), data.sentence_start_offset); part != std::prev(data.sentence.end()); part++)
+        // start_token += (*part).num_tokens;
 
-    // Get number of tokens leading up to (but not including) the last part of the sentence
-    while (part->next != nullptr) {
-        start_token += part->num_tokens;
-        part = part->next;
+    if (!data.sentence.empty())
+        for (auto part = std::next(data.sentence.begin(), data.sentence_start_offset); part != std::prev(data.sentence.end()); part++)
+            start_token += (*part).num_tokens;
+
+    // If the index of the start token is greater than the number of tokens provided by the asr, then the token array was reset
+    // Apply an offset to ignore words no longer included in the tokens list and continue as if the sentence is empty
+    // We also pop the last word in the list because it will become the first word of the new sentence
+    if (start_token > data.token_count) {
+        data.prev_sentence_length = 0;
+        data.sentence_start_offset = data.sentence.size();
+        start_token = 0;
     }
 
-    // Strip the last part in the sentence if it is not the only part
-    if (data->sentence_start != data->sentence_end) {
-        data->sentence_end = deallocate_part_end(data->sentence_end);
-        data->sentence_end->next = nullptr;
+    std::string previous_last_word = "";
+
+    if (data.sentence.size() - data.sentence_start_offset > 0) {
+        // Save the text of the last word for later comparison
+        previous_last_word = data.sentence.back().text;
+        data.sentence.pop_back();
     }
 
-    // Previous tokens may change, so we set the token counter before the last word to catch those changes
-    for (int t = start_token; t < data->token_count; t++) {
-        const char* curr_token = data->tokens[t].token;
-        sentence_part* curr_word = data->sentence_end;
-
-        bool is_new_word = false;
-        if (curr_token[0] == ' ')
-            is_new_word = true;
-        else
-            curr_word->num_tokens++;
-
-
-        if (is_punctuation(curr_token[0]))
-            continue;
-
+    // Create words from tokens and add them to the sentence
+    for (int t = start_token; t < data.token_count; t++) {
+        const char* curr_token = data.tokens[t].token;
         int c = 0;
-        if (is_new_word) {
-            curr_word = new sentence_part();
-            curr_word->prev = data->sentence_end;
-            data->sentence_end->next = curr_word;
-            data->sentence_end = curr_word;
 
-            curr_word->num_tokens++;
+        // Detect new word
+        if (curr_token[0] == ' ') {
+            sentence_part part{ "", 1 };
+            data.sentence.push_back(part);
 
             // Skip space at start of word
             c++;
         }
+        else {
+            data.sentence.back().num_tokens++;
 
-        while (curr_token[c] != '\0' && curr_word->length < MAX_WORD_LENGTH) {
-            if (curr_token[c] != ',' && curr_token[c] != '\'') {
-                curr_word->text[curr_word->length] = curr_token[c];
-                curr_word->length++;
+            if (is_punctuation(curr_token[0])) {
+                break;
+            }
+        }
+
+        char temp_word[MAX_WORD_LENGTH];
+        int char_index = 0;
+        while (curr_token[c] != '\0' && char_index < MAX_WORD_LENGTH) {
+            if (!is_other_special(curr_token[c])) {
+                temp_word[char_index] = curr_token[c];
+                char_index++;
             }
 
             c++;
         }
 
-        curr_word->text[curr_word->length] = '\0';
+        temp_word[char_index] = '\0';
+
+        data.sentence.back().text += temp_word;
     }
 
-    sentence_part* word = data->sentence_start;
+    switch(data.result_type){
+        case APRIL_RESULT_RECOGNITION_FINAL:
 
-    switch(data->result_type){
-        case APRIL_RESULT_RECOGNITION_FINAL: 
-            deallocate_parts_from_start(data->sentence_start);
+            reset_sentence_data(data);
 
-            data->sentence_start = new sentence_part();
-            data->sentence_end = data->sentence_start;
-            data->prev_token_count = 0;
-            std::cout << '\n';
-            //std::cout << '@';
-            // std::cout << "\n[" << data->sentence << "]\n";
-
-            break;
+            return;
         case APRIL_RESULT_RECOGNITION_PARTIAL:
-
-            //std::cout << "- ";
-            //std::cout << '\n' << data->sentence << '\n';
             break;
 
         case APRIL_RESULT_SILENCE:
-            /*
-                std::cout << "\n[ ";
 
-                while (word->next != nullptr) {
-
-                    word = word->next;
-                    std::cout << word->word << ' ';
-                }
-                std::cout << "]\n";
-                */
-
-            // std::cout << std::endl;
-            deallocate_parts_from_start(data->sentence_start);
-
-            data->sentence_start = new sentence_part();
-            data->sentence_end = data->sentence_start;
-            data->prev_token_count = 0;
+            reset_sentence_data(data);
 
             return;
-
         default:
             // assert(false);
             return;
     }
 
-    data->prev_token_count = data->token_count;
+    data.prev_sentence_length = data.sentence.size();
+    data.updated = data.prev_sentence_length != data.sentence.size() || previous_last_word != data.sentence.back().text;
+
+    // for (int t= 0 ; t < data.token_count; t++)
+    //     std::cout << data.tokens[t].token;
+    // std::cout << std::endl;
 }

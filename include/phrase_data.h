@@ -3,6 +3,8 @@
 
 #include "definitions.h"
 
+#include <string>
+
 /**
  * Types of actions
  *
@@ -31,19 +33,19 @@ struct action {
     char* data; 
 };
 
-// Part of a sentence including a word, its length, and a reference to the next part
+// Part of a sentence including a word, its length, and references to the previous and next part
 struct sentence_part {
     // Characters of the word held in this part of the sentence
-    char text[MAX_WORD_LENGTH];
-    // char* text;
-    // Reference to the next part of the sentence
-    sentence_part* next;
-    // Reference to the previous part of the sentence
-    sentence_part* prev;
-    // Number of characters in the word
-    int length;
+    std::string text;
     // Number of tokens used to construct this word, including tokens for punctuation and other removed symbols
     int num_tokens;
+};
+
+// Part of a phrase, including a word and a reference to the next part
+struct phrase_part {
+
+    std::string text;
+    phrase_part* next;
 };
 
 struct phrase {
@@ -57,9 +59,5 @@ struct phrase {
     // Actions to be run when the phrase is matched
     action* actions;
 };
-
-sentence_part* deallocate_part(sentence_part* part);
-sentence_part* deallocate_part_end(sentence_part* part);
-void deallocate_parts_from_start(sentence_part* start);
 
 #endif

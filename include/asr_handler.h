@@ -3,6 +3,8 @@
 
 #include "definitions.h"
 
+#include <list>
+
 #include "phrase_data.h"
 
 // Use system install of april-asr if it was found during compilation
@@ -13,15 +15,16 @@
 #endif
 
 struct asr_sentence_data {
-    sentence_part* sentence_start;
-    sentence_part* sentence_end;
+    std::list<sentence_part> sentence;
     int token_count;
-    int prev_token_count;
+    int prev_sentence_length;
     AprilResultType result_type;
     AprilToken* tokens;
+    int sentence_start_offset;
+    bool updated;
 };
 
 void handler(void *handler_data, AprilResultType result, size_t count, const AprilToken *tokens);
-void process_tokens(asr_sentence_data* data);
+void process_tokens(asr_sentence_data& data);
 
 #endif

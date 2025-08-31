@@ -106,53 +106,37 @@ int main (int argc, char *argv[]) {
 
     AprilASRSession session = aas_create_session(model, config);
 
-    if(argv[1][0] == '-' && argv[1][1] == 'm') {
-        // Reading stdin mode. It's assumed that the input data is pcm16 audio,
-        // sampled in the model's sample rate.
-        // You can achieve this on Linux like this:
-        // $ parec --format=s16 --rate=16000 --channels=1 --latency-ms=100 | ./main -m /path/to/model.april
+    char recording_data[BUFFER_SIZE];
+    ssize_t r;
+    for(;;) {
+        r = read(STDIN_FILENO, recording_data, BUFFER_SIZE);
 
-        char recording_data[BUFFER_SIZE];
-        ssize_t r;
-        for(;;) {
-            r = read(STDIN_FILENO, recording_data, BUFFER_SIZE);
+        if (r == -1) {
+            aas_flush(session);
+            break;
+        } 
+        else if (r <= 0) {
+            continue;
+        }
 
-            if (r == -1) {
-                aas_flush(session);
-                break;
-            } 
-            else if (r <= 0) {
-                continue;
-            }
+        aas_feed_pcm16(session, (short *)recording_data, r/2);
+        process_tokens(sentence_data);
 
-            aas_feed_pcm16(session, (short *)recording_data, r/2);
+        if (sentence_data.updated) {
+            sentence_data.updated = false;
 
-            process_tokens(&sentence_data);
-
-
-            sentence_part* part = sentence_data.sentence_start;
-            while (part != nullptr) {
-                if (part->text != nullptr) {
-                    std::cout << part->text << ' ';
-                    std::flush(std::cout);
-                }
-                part = part->next;
+            for (auto part : sentence_data.sentence) {
+                std::cout << part.text << ' ';
             }
             std::cout << std::endl;
-
-            // TODO: Scan sentence to match phrases
-            // sentence_part* part = sentence_data.sentence_start;
-            //
-            // while (part != nullptr) {
-            //     std::cout << part->word << ' ';
-            //     std::flush(std::cout);
-                // part = part->next;
-            // }
         }
+
+        // TODO: Scan sentence for matching phrases
     } 
-    
+
     aas_free(session);
     aam_free(model);
 
+    std::cout << "Exiting!" << std::endl;
     return 0;
 }
