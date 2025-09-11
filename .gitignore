@@ -29,7 +29,7 @@
 *.out
 
 # Gitmodule library artifacts
-/external/source
+# /external/source
 /external/lib
 
 # Editor-Specific
