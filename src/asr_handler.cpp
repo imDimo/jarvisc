@@ -51,9 +51,8 @@ void process_tokens(asr_sentence_data& data) {
     // for (auto part = std::next(data.sentence.begin(), data.sentence_start_offset); part != std::prev(data.sentence.end()); part++)
         // start_token += (*part).num_tokens;
 
-    if (!data.sentence.empty())
-        for (auto part = std::next(data.sentence.begin(), data.sentence_start_offset); part != std::prev(data.sentence.end()); part++)
-            start_token += (*part).num_tokens;
+    for (auto part = std::next(data.sentence.begin(), data.sentence_start_offset); part != std::prev(data.sentence.end()); part++)
+        start_token += (*part).num_tokens;
 
     // If the index of the start token is greater than the number of tokens provided by the asr, then the token array was reset
     // Apply an offset to ignore words no longer included in the tokens list and continue as if the sentence is empty
