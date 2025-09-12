@@ -2,6 +2,7 @@ CMAKE_MINIMUM_REQUIRED(VERSION 3.5)
 PROJECT(jarvisc)
 
 set(APRILASR april-asr)
+set(PORTAUDIO PortAudio)
 
 set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}/lib/static)
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}/lib/shared)
@@ -29,4 +30,23 @@ else() # Build and use our own april-asr library
 
 endif()
 
+if(PORTAUDIO_FOUND)
 
+    message("--Found portaudio: ${PORTAUDIO_FOUND}")
+
+    add_library(${PORTAUDIO} SHARED IMPORTED)
+    set_property(TARGET ${PORTAUDIO} PROPERTY IMPORTED_LOCATION ${PORTAUDIO_FOUND})
+
+else()
+
+    add_subdirectory(${PROJECT_SOURCE_DIR}/source/${PORTAUDIO} ${PROJECT_SOURCE_DIR}/source/${PORTAUDIO}/build)
+
+    link_directories(${PROJECT_SOURCE_DIR}/lib/*)
+
+    add_custom_target(
+        portaudio_static
+        COMMAND make
+        WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}/source/${PORTAUDIO}/build
+    )
+
+endif()

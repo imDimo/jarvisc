@@ -2,5 +2,5 @@
 	path = external/source/april-asr
 	url = git@github.com:abb128/april-asr.git
 [submodule "external/source/portaudio"]
-	path = external/source/portaudio
+	path = external/source/PortAudio
 	url = git@github.com:PortAudio/portaudio.git

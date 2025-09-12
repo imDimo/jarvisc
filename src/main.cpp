@@ -14,6 +14,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+#include <cstdio>
 #include <getopt.h>
 #include <cstring>
 #include <iostream>
@@ -35,6 +36,8 @@ typedef SSIZE_T ssize_t;
 
 #include "../include/asr_handler.h"
 #include "../include/phrase_data.h"
+
+#include "../include/recording.h"
 
 int main (int argc, char *argv[]) {
     struct jarvisc_options {
@@ -71,8 +74,12 @@ int main (int argc, char *argv[]) {
         }
     }
 
-    // AsrHandler* asr_handler = AsrHandler::getHandler();
-    // asr_sentence_data* sentence_data = AsrHandler::getHandler()->sentence_data;
+    PaError pa_err = Pa_Initialize();
+
+    if (pa_err != paNoError) {
+        std::cout << "Error while initializing PortAudio: " << Pa_GetErrorText(pa_err) << std::endl;
+        exit(1);
+    }
 
     // In the start of our program we should call aam_api_init.
     // This should only be called once.
@@ -133,6 +140,10 @@ int main (int argc, char *argv[]) {
 
         // TODO: Scan sentence for matching phrases
     } 
+
+    pa_err = Pa_Terminate();
+    if( pa_err != paNoError )
+        std::cout << "Error while terminating PortAudio: " << Pa_GetErrorText(pa_err) << std::endl;
 
     aas_free(session);
     aam_free(model);
