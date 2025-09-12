@@ -20,7 +20,8 @@ else() # Build and use our own april-asr library
 
     add_subdirectory(${PROJECT_SOURCE_DIR}/source/${APRILASR} ${PROJECT_SOURCE_DIR}/source/${APRILASR}/build)
 
-    link_directories(${PROJECT_SOURCE_DIR}/lib/*)
+    link_directories(${PROJECT_SOURCE_DIR}/lib/shared)
+    link_directories(${PROJECT_SOURCE_DIR}/lib/static)
 
     add_custom_target(
         ${APRILASR}
@@ -32,21 +33,24 @@ endif()
 
 if(PORTAUDIO_FOUND)
 
-    message("--Found portaudio: ${PORTAUDIO_FOUND}")
+    message("-- Found portaudio: ${PORTAUDIO_FOUND}")
 
-    add_library(${PORTAUDIO} SHARED IMPORTED)
+    add_library(${PORTAUDIO}_static STATIC IMPORTED)
     set_property(TARGET ${PORTAUDIO} PROPERTY IMPORTED_LOCATION ${PORTAUDIO_FOUND})
 
 else()
 
-    add_subdirectory(${PROJECT_SOURCE_DIR}/source/${PORTAUDIO} ${PROJECT_SOURCE_DIR}/source/${PORTAUDIO}/build)
+    execute_process(COMMAND bash ./configure --enable-static WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}/source/${PORTAUDIO})
 
-    link_directories(${PROJECT_SOURCE_DIR}/lib/*)
+    # add_subdirectory(${PROJECT_SOURCE_DIR}/source/${PORTAUDIO} ${PROJECT_SOURCE_DIR}/source/${PORTAUDIO}/build)
+
+    link_directories(${PROJECT_SOURCE_DIR}/lib/shared)
+    link_directories(${PROJECT_SOURCE_DIR}/lib/static)
 
     add_custom_target(
-        portaudio_static
+        ${PORTAUDIO}_static
         COMMAND make
-        WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}/source/${PORTAUDIO}/build
+        WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}/source/${PORTAUDIO}
     )
 
 endif()
