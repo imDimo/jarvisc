@@ -5,7 +5,7 @@
 #ifdef PORTAUDIO_INSTALLED
 #include <portaudio/portaudio.h>
 #else
-#include "../external/source/portaudio/include/portaudio.h"
+#include "../external/source/PortAudio/include/portaudio.h"
 #endif
 
 struct pa_audio_data {
