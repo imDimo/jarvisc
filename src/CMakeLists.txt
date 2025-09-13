@@ -11,13 +11,6 @@ set(SOURCE_FILES
     main.cpp
     phrase_data.cpp
     asr_handler.cpp
-    recording.cpp
 )
 
 add_executable(${PROJECT_NAME} ${SOURCE_FILES})
-
-add_custom_command(
-    TARGET ${PROJECT_NAME} COMMAND ${CMAKE_COMMAND} -E copy
-    ${CMAKE_SOURCE_DIR}/scripts/pipe-parec
-    ${outputDir}/pipe-parec
-)

@@ -74,13 +74,6 @@ int main (int argc, char *argv[]) {
         }
     }
 
-    PaError pa_err = Pa_Initialize();
-
-    if (pa_err != paNoError) {
-        std::cout << "Error while initializing PortAudio: " << Pa_GetErrorText(pa_err) << std::endl;
-        exit(1);
-    }
-
     // In the start of our program we should call aam_api_init.
     // This should only be called once.
     aam_api_init(APRIL_VERSION);
@@ -105,28 +98,44 @@ int main (int argc, char *argv[]) {
     AprilConfig config{};
     config.handler = handler;
     config.userdata = (void*)&sentence_data;
-
+    
     // By default, the session runs in synchronous mode. If you want async
     // processing, you may choose to set it to APRIL_CONFIG_FLAG_ASYNC_RT_BIT
     // here.
     config.flags = APRIL_CONFIG_FLAG_ZERO_BIT;
-
     AprilASRSession session = aas_create_session(model, config);
+    
+    PaError pa_err = Pa_Initialize();
+    if (pa_err != paNoError) {
+        std::cout << "Error while initializing PortAudio: " << Pa_GetErrorText(pa_err) << std::endl;
+        exit(1);
+    }
 
-    char recording_data[BUFFER_SIZE];
-    ssize_t r;
+    PaStream* pa_stream;
+    pa_err = Pa_OpenDefaultStream(&pa_stream, 1, 0, paInt16, aam_get_sample_rate(model), BUFFER_SIZE, NULL, NULL);
+    
+    if (pa_err != paNoError) {
+        std::cout << "Error while opening PortAudio stream: " << Pa_GetErrorText(pa_err) << std::endl;
+        exit(2);
+    }
+    
+    pa_err = Pa_StartStream(pa_stream);
+    
+    if (pa_err != paNoError) {
+        std::cout << "Error while starting PortAudio stream: " << Pa_GetErrorText(pa_err) << std::endl;
+        exit(3);
+    }
+
+    short* input_data = new short[BUFFER_SIZE];
     for(;;) {
-        r = read(STDIN_FILENO, recording_data, BUFFER_SIZE);
+        pa_err = Pa_ReadStream(pa_stream, input_data, BUFFER_SIZE);
 
-        if (r == -1) {
-            aas_flush(session);
-            break;
-        } 
-        else if (r <= 0) {
-            continue;
+        if (pa_err != paNoError) {
+            std::cout << "Error while reading from PortAudio stream: " << Pa_GetErrorText(pa_err) << std::endl;
+            exit(3);
         }
-
-        aas_feed_pcm16(session, (short *)recording_data, r/2);
+        
+        aas_feed_pcm16(session, input_data, BUFFER_SIZE);
         process_tokens(sentence_data);
 
         if (sentence_data.updated) {
@@ -139,7 +148,19 @@ int main (int argc, char *argv[]) {
         }
 
         // TODO: Scan sentence for matching phrases
-    } 
+    }
+
+    pa_err = Pa_StopStream(pa_stream);
+    if (pa_err != paNoError) {
+        std::cout << "Error while stopping PortAudio stream: " << Pa_GetErrorText(pa_err) << std::endl;
+        exit(4);
+    }
+
+    pa_err = Pa_CloseStream(pa_stream);
+    if (pa_err != paNoError) {
+        std::cout << "Error while stopping PortAudio stream: " << Pa_GetErrorText(pa_err) << std::endl;
+        exit(4);
+    }
 
     pa_err = Pa_Terminate();
     if( pa_err != paNoError )

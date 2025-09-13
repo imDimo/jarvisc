@@ -66,6 +66,8 @@ void process_tokens(asr_sentence_data& data) {
     std::string previous_last_word = "";
 
     if (data.sentence.size() - data.sentence_start_offset > 0) {
+        std::cout << ".";
+        std::flush(std::cout);
         // Save the text of the last word for later comparison
         previous_last_word = data.sentence.back().text;
         data.sentence.pop_back();
